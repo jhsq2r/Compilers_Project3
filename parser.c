@@ -5,7 +5,9 @@
 
 struct Node {
         char* nodeName;
-        struct Token* tk;
+        struct Token* tk1;
+        struct Token* tk2;
+        struct Token* tk3;
         struct Node *left;
         struct Node *leftmiddle;
         struct Node *rightmiddle;
@@ -16,7 +18,9 @@ struct Node* getNode(char* name){
         struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
                 if (newNode != NULL){
                         newNode->nodeName = strdup(name);
-                        newNode->tk = NULL;
+                        newNode->tk1 = NULL;
+                        newNode->tk2 = NULL;
+                        newNode->tk3 = NULL;
                         newNode->left = NULL;
                         newNode->leftmiddle = NULL;
                         newNode->rightmiddle = NULL;
@@ -32,7 +36,9 @@ void freeTree(struct Node* root){
                 freeTree(root->rightmiddle);
                 freeTree(root->right);
                 free(root->nodeName);
-                free(root->tk);
+                free(root->tk1);
+                free(root->tk2);
+                free(root->tk3);
                 free(root);
         }
 }
@@ -48,25 +54,56 @@ void printInOrder(struct Node* root, FILE *file, int level){
         }
 }
 
+void printInOrderNow(struct Node* root, int level){
+        if(root != NULL){
+                printInOrderNow(root->left,level+1);
+                printf("Level: %d || %s ||", level, root->nodeName);
+                if(root->tk1 != NULL){
+                        printf(" %s ||", root->tk1->tokenInstance);
+                }
+                if(root->tk2 != NULL){
+                        printf(" %s ||", root->tk2->tokenInstance);
+                }
+                if(root->tk3 != NULL){
+                        printf(" %s ||", root->tk3->tokenInstance);
+                }
+                printf("\n");
+                printInOrderNow(root->leftmiddle, level+1);
+                // printf("Level: %d || %s ||", level, root->nodeName);
+                // if(root->tk1 != NULL){
+                //         printf(" %s ||", root->tk1->tokenInstance);
+                // }
+                // if(root->tk2 != NULL){
+                //         printf(" %s ||", root->tk2->tokenInstance);
+                // }
+                // if(root->tk3 != NULL){
+                //         printf(" %s ||", root->tk3->tokenInstance);
+                // }
+                // printf("\n");
+                printInOrderNow(root->rightmiddle, level+1);
+                printInOrderNow(root->right, level+1);
+        }
+}
+
 int tokenNum = 0;
 
-void vars(struct Token* list);
-void varsExtended(struct Token* list);
-void block(struct Token* list);
-void stats(struct Token* list);
-void mStat(struct Token* list);
-void stat(struct Token* list);
-void program(struct Token* list);
-void programExtended(struct Token* list);
-void pickbody(struct Token* list);
-void ro(struct Token* list);
-void roExtended(struct Token* list);
-void expr(struct Token* list);
-void n(struct Token* list);
-void nExtended(struct Token* list);
-void a(struct Token* list);
-void m(struct Token* list);
-void r(struct Token* list);
+struct Node* vars(struct Token* list);
+struct Node* varsExtended(struct Token* list);
+struct Node* block(struct Token* list);
+struct Node* stats(struct Token* list);
+struct Node* mStat(struct Token* list);
+struct Node* stat(struct Token* list);
+struct Node* program(struct Token* list);
+struct Node* programExtended(struct Token* list);
+struct Node* pickbody(struct Token* list);
+struct Node* ro(struct Token* list);
+struct Node* roExtended(struct Token* list);
+struct Node* expr(struct Token* list);
+struct Node* n(struct Token* list);
+struct Node* nExtended(struct Token* list);
+struct Node* a(struct Token* list);
+struct Node* m(struct Token* list);
+struct Node* r(struct Token* list);
 
 struct Token* currentToken(int x, struct Token* list){
 
@@ -89,512 +126,589 @@ struct Token* currentToken(int x, struct Token* list){
 
 void parser(struct Token* list){
         //printf("In parser Function...\n");
-        program(list);
+        struct Node* root;
+        root = program(list);
         if(strcmp(currentToken(tokenNum, list)->idTk,"EOF_TK") == 0){
                 printf("Success!!!\n");
         }else{
                 printf("Error in parser function\n");
         }
+
+        printInOrderNow(root,0);
+        printf("Done with tree\n");
+        freeTree(root);
+
+        printf("Done\n");
+
         return;
 }
 
-void program(struct Token* list){
+struct Node* program(struct Token* list){
         //printf("In program Function...Token: %s\n", list->tokenInstance);
-        vars(list);
+        struct Node* temp = getNode("program");
+        temp->left = vars(list);
         if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"tape") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                programExtended(list);
-                return;
+                temp->leftmiddle = programExtended(list);
+                return temp;
         }else{
                 //error expected tape
-                printf("Error: Expected 'tape' got %s\n", list->tokenInstance);
+                printf("Error: Expected 'tape' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
 
         }
 }
 
-void vars(struct Token* list){
+struct Node* vars(struct Token* list){
         //printf("In vars Function...Token: %s\n", list->tokenInstance);
+        struct Node* temp = getNode("vars");
         if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"create") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
-                        varsExtended(list);
+                        temp->left = varsExtended(list);
                 }
         }else{
-                return;
+                return NULL;
         }
-        return;
 }
 
-void varsExtended(struct Token* list){
+struct Node* varsExtended(struct Token* list){
         //printf("In varsExtended Function...Token: %s\n", list->tokenInstance);
+        struct Node* temp = getNode("varsExtended");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                return;
+                return temp;
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,":=") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"INT_TK") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                 tokenNum++;
-                                vars(list);
-                                return;
+                                temp->left = vars(list);
+                                return temp;
                         }else{
                                 //error expected ;
-                                printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
 
                         }
                 }else{
                         //error expected INT
-                        printf("Error: Expected 'INT' got %s\n", list->tokenInstance);
+                        printf("Error: Expected 'INT' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else{
                 //error expected ; or := INT ;
-                printf("Error: Expected ';' or ':= INT' got %s\n", list->tokenInstance);
+                printf("Error: Expected ';' or ':= INT' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
 
         }
 }
 
-void programExtended(struct Token* list){
+struct Node* programExtended(struct Token* list){
+        struct Node* temp = getNode("programExtended");
         //printf("In programExtended Function...Token: %s\n", list->tokenInstance);
         if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"func") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
-                        block(list);
-                        block(list);
-                        return;
+                        temp->left = block(list);
+                        temp->leftmiddle = block(list);
+                        return temp;
                 }else{
                         //error expected IDENT_TK
-                        printf("Error: Expected 'IDENT_TK' got %s\n", list->tokenInstance);
+                        printf("Error: Expected 'IDENT_TK' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
 
                 }
         }else{
-                block(list);
-                return;
+                temp->left = block(list);
+                return temp;
         }
 }
 
-void block(struct Token* list){
+struct Node* block(struct Token* list){
         //printf("In block Function...Token: %s\n", list->tokenInstance);
+        struct Node* temp = getNode("block");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"{") == 0){
                 tokenNum++;
-                vars(list);
-                stats(list);
+                temp->left = vars(list);
+                temp->leftmiddle = stats(list);
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"}") == 0){
                         tokenNum++;
-                        return;
+                        return temp;
                 }else{
                         //errpr expected }
-                        printf("Error: Expected '}' got %s\n", list->tokenInstance);
+                        printf("Error: Expected '}' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
 
                 }
         }else{
                 //error expected {
-                printf("Error: Expected '{' got %s\n", list->tokenInstance);
+                printf("Error: Expected '{' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
 
         }
 }
 
-void stats(struct Token* list){
+struct Node* stats(struct Token* list){
         //printf("In stats Function...Token: %s\n", list->tokenInstance);
-        stat(list);
-        mStat(list);
-        return;
+        struct Node* temp = getNode("stats");
+        temp->left = stat(list);
+        temp->leftmiddle = mStat(list);
+        return temp;
 }
 
-void mStat(struct Token* list){
+struct Node* mStat(struct Token* list){
         //printf("In mStat Function...Token: %s\n", list->tokenInstance);
+        struct Node* temp = getNode("mStat");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance, "}") == 0){
-                return;
+                return NULL;
         }else{
-                stat(list);
-                mStat(list);
-                return;
+                temp->left = stat(list);
+                temp->leftmiddle = mStat(list);
+                return temp;
         }
 }
 
-void stat(struct Token* list){
+struct Node* stat(struct Token* list){
         //printf("In stat Function...Token: %s\n", list->tokenInstance);
         if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"label") == 0){
+                struct Node* temp = getNode("stat--label");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                 tokenNum++;
-                                return;
+                                return temp;
                         }else{
                                 //error expected ;
-                                printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected IDENT_TK
-                        printf("Error: Expected 'IDENT_TK' got %s\n", list->tokenInstance);
+                        printf("Error: Expected 'IDENT_TK' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"cin") == 0){
+                struct Node* temp = getNode("stat--in");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                 tokenNum++;
-                                return;
+                                return temp;
                         }else{
                                 //error expected ;
-                                printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected IDENT_TK
-                        printf("Error: Expected 'IDENT_TK' got %s\n", list->tokenInstance);
+                        printf("Error: Expected 'IDENT_TK' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"cout") == 0){
+                struct Node* temp = getNode("stat--out");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                expr(list);
+                temp->left = expr(list);
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                         tokenNum++;
-                        return;
+                        return temp;
                 }else{
                         //error expected ;
-                        printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                        printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"if") == 0){
+                struct Node* temp = getNode("stat--if");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"[") == 0){
                         tokenNum++;
-                        expr(list);
-                        ro(list);
-                        expr(list);
+                        temp->left = expr(list);
+                        temp->leftmiddle = ro(list);
+                        temp->rightmiddle = expr(list);
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"]") == 0){
                                 tokenNum++;
                                 if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"then") == 0){
+                                        temp->tk2 = currentToken(tokenNum, list);
                                         tokenNum++;
-                                        stat(list);
+                                        temp->right = stat(list);
                                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                                 tokenNum++;
-                                                return;
+                                                return temp;
                                         }else{
                                                 //error expected ;
-                                                printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                                printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                                         }
                                 }else{
                                         //error expected then
-                                        printf("Error: Expected 'then' got %s\n", list->tokenInstance);
+                                        printf("Error: Expected 'then' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                                 }
                         }else{
                                 //error expected ]
-                                printf("Error: Expected ']' got %s\n", list->tokenInstance);
+                                printf("Error: Expected ']' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected [
-                        printf("Error: Expected '[' got %s\n", list->tokenInstance);
+                        printf("Error: Expected '[' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"pick") == 0){
+                struct Node* temp = getNode("stat--pick");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                expr(list);
-                pickbody(list);
+                temp->left = expr(list);
+                temp->leftmiddle = pickbody(list);
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                         tokenNum++;
-                        return;
+                        return temp;
                 }else{
                         //error expected ;
-                        printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                        printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"while") == 0){
+                struct Node* temp = getNode("stat--whileloop");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"[") == 0){
                         tokenNum++;
-                        expr(list);
-                        ro(list);
-                        expr(list);
+                        temp->left = expr(list);
+                        temp->leftmiddle = ro(list);
+                        temp->rightmiddle = expr(list);
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"]") == 0){
                                 tokenNum++;
-                                stat(list);
+                                temp->right = stat(list);
                                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                         tokenNum++;
-                                        return;
+                                        return temp;
                                 }else{
                                         //error expected ;
-                                        printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                        printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                                 }
                         }else{
                                 //error expected ]
-                                printf("Error: Expected ']' got %s\n", list->tokenInstance);
+                                printf("Error: Expected ']' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected [
-                        printf("Error: Expected '[' got %s\n", list->tokenInstance);
+                        printf("Error: Expected '[' got %s\n", currentToken(tokenNum, list)->tokenInstance);
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"repeat") == 0){
+                struct Node* temp = getNode("stat--repeatloop");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                stat(list);
+                temp->left = stat(list);
                 if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"until") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"[") == 0){
                                 tokenNum++;
-                                expr(list);
-                                ro(list);
-                                expr(list);
+                                temp->leftmiddle = expr(list);
+                                temp->rightmiddle = ro(list);
+                                temp->right = expr(list);
                                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"]") == 0){
                                         tokenNum++;
                                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                                 tokenNum++;
-                                                return;
+                                                return temp;
                                         }else{
                                                 //error expected ;
-                                                printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                                printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                                         }
                                 }else{
                                         //error expected ]
-                                        printf("Error: Expected ']' got %s\n", list->tokenInstance);
+                                        printf("Error: Expected ']' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                                 }
                         }else{
                                 //error expected ]
-                                printf("Error: Expected '[' got %s\n", list->tokenInstance);
+                                printf("Error: Expected '[' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected until
-                        printf("Error: Expected 'until' got %s\n", list->tokenInstance);
+                        printf("Error: Expected 'until' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"set") == 0){
+                struct Node* temp = getNode("stat--assign");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"=") == 0){
+                                temp->tk3 = currentToken(tokenNum, list);
                                 tokenNum++;
-                                expr(list);
+                                temp->left = expr(list);
                                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                         tokenNum++;
-                                        return;
+                                        return temp;
                                 }else{
                                         //error expected ;
-                                        printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                        printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                                 }
                         }else{
                                 //error expected =
-                                printf("Error: Expected '=' got %s\n", list->tokenInstance);
+                                printf("Error: Expected '=' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected IDENT_TK
-                        printf("Error: Expected 'IDENT_TK' got %s\n", list->tokenInstance);
+                        printf("Error: Expected 'IDENT_TK' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                struct Node* temp = getNode("stat--assign");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"=") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
-                        expr(list);
+                        temp->left = expr(list);
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                 tokenNum++;
-                                return;
+                                return temp;
                         }else{
                                 //error expected ;
-                                printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected =
-                        printf("Error: Expected '=' got %s\n", list->tokenInstance);
+                        printf("Error: Expected '=' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"jump") == 0){
+                struct Node* temp = getNode("stat--goto");
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,";") == 0){
                                 tokenNum++;
-                                return;
+                                return temp;
                         }else{
                                 //error expected ;
-                                printf("Error: Expected ';' got %s\n", list->tokenInstance);
+                                printf("Error: Expected ';' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected IDENT_TK
-                        printf("Error: Expected 'IDENT_TK' got %s\n", list->tokenInstance);
+                        printf("Error: Expected 'IDENT_TK' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"{") == 0){
-                block(list);
-                return;
+                struct Node* temp = getNode("stat--block");
+                temp->left = block(list);
+                return temp;
         }else{
                 //error in stat
-                printf("Error: (Stat)Expected something but got %s\n", list->tokenInstance);
+                printf("Error: (Stat)Expected something but got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
         }
 
 
 }
 
-void pickbody(struct Token* list){
-        stat(list);
+struct Node* pickbody(struct Token* list){
+        struct Node* temp = getNode("pickbody");
+        temp->left = stat(list);
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,":") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                stat(list);
-                return;
+                temp->leftmiddle = stat(list);
+                return temp;
         }else{
                 //error expected :
-                printf("Error: Expected ':' got %s\n", list->tokenInstance);
+                printf("Error: Expected ':' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
         }
 }
 
-void ro(struct Token* list){
+struct Node* ro(struct Token* list){
+        struct Node* temp = getNode("ro");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"<") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                return;
+                return temp;
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,">") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                return;
+                return temp;
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,".") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,".") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
                         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,".") == 0){
+                                temp->tk3 = currentToken(tokenNum, list);
                                 tokenNum++;
-                                return;
+                                return temp;
                         }else{
                                 //error expected .
-                                printf("Error: Expected '.' got %s\n", list->tokenInstance);
+                                printf("Error: Expected '.' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                         }
                 }else{
                         //error expected .
-                        printf("Error: Expected '.' got %s\n", list->tokenInstance);
+                        printf("Error: Expected '.' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"=") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                roExtended(list);
-                return;
+                temp->left = roExtended(list);
+                return temp;
         }else{
                 //error in ro
-                printf("Error: (ro)Expected operator but got %s\n", list->tokenInstance);
+                printf("Error: (ro)Expected operator but got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
         }
 }
 
-void roExtended(struct Token* list){
+struct Node* roExtended(struct Token* list){
+        struct Node* temp = getNode("roExtended");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"=") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                return;
+                return temp;
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"!") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"=") == 0){
+                        temp->tk2 = currentToken(tokenNum, list);
                         tokenNum++;
-                        return;
+                        return temp;
                 }else{
                         //error expected =
-                        printf("Error: Expected '=' got %s\n", list->tokenInstance);
+                        printf("Error: Expected '=' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else{
                 //error expected = or !=
-                printf("Error: Expected '=' or '!=' got %s\n", list->tokenInstance);
+                printf("Error: Expected '=' or '!=' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
         }
 }
 
-void expr(struct Token* list){
-        n(list);
+struct Node* expr(struct Token* list){
+        struct Node* temp = getNode("expr");
+        temp->left = n(list);
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"-") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                expr(list);
-                return;
+                temp->leftmiddle = expr(list);
+                return temp;
         }else{
-                return;
+                return temp;
         }
 
 }
 
-void n(struct Token* list){
-        a(list);
-        nExtended(list);
-        return;
+struct Node* n(struct Token* list){
+        struct Node* temp = getNode("n");
+        temp->left = a(list);
+        temp->leftmiddle = nExtended(list);
+        return temp;
 }
 
-void nExtended(struct Token* list){
+struct Node* nExtended(struct Token* list){
+        struct Node* temp = getNode("nExtended");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"/") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                a(list);
-                nExtended(list);
-                return;
+                temp->left = a(list);
+                temp->leftmiddle = nExtended(list);
+                return temp;
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"+") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                a(list);
-                nExtended(list);
-                return;
+                temp->left = a(list);
+                temp->leftmiddle = nExtended(list);
+                return temp;
         }else{
-                return;
+                return NULL;
         }
 }
 
-void a(struct Token* list){
-        m(list);
+struct Node* a(struct Token* list){
+        struct Node* temp = getNode("a");
+        temp->left = m(list);
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"*") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                a(list);
-                return;
+                temp->leftmiddle = a(list);
+                return temp;
         }else{
-                return;
+                return temp;
         }
 }
 
-void m(struct Token* list){
+struct Node* m(struct Token* list){
+        struct Node* temp = getNode("m");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"^") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                m(list);
-                return;
+                temp->left = m(list);
+                return temp;
         }else{
-                r(list);
-                return;
+                temp->left = r(list);
+                return temp;
         }
 }
 
-void r(struct Token* list){
+struct Node* r(struct Token* list){
+        struct Node* temp = getNode("r");
         if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"(") == 0){
                 tokenNum++;
-                expr(list);
+                temp->left = expr(list);
                 if(strcmp(currentToken(tokenNum, list)->idTk,"OP_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,")") == 0){
                         tokenNum++;
-                        return;
+                        return temp;
                 }else{
                         //error expected )
-                        printf("Error: Expected ')' got %s\n", list->tokenInstance);
+                        printf("Error: Expected ')' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                return;
+                return temp;
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"INT_TK") == 0){
+                temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
-                return;
+                return temp;
         }else{
                 //error in r
-                printf("Error: Expected 'IDENTIFIER', 'INTEGER', or '(' got %s\n", list->tokenInstance);
+                printf("Error: Expected 'IDENTIFIER', 'INTEGER', or '(' got %s\n", currentToken(tokenNum, list)->tokenInstance);
 
         }
 }
