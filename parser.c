@@ -3,16 +3,6 @@
 #include<string.h>
 #include"parser.h"
 
-struct Node {
-        char* nodeName;
-        struct Token* tk1;
-        struct Token* tk2;
-        struct Token* tk3;
-        struct Node *left;
-        struct Node *leftmiddle;
-        struct Node *rightmiddle;
-        struct Node *right;
-};
 
 struct Node* getNode(char* name){
         struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
@@ -43,20 +33,8 @@ void freeTree(struct Node* root){
         }
 }
 
-void printInOrder(struct Node* root, FILE *file, int level){
+void printPreOrderNow(struct Node* root, int level){
         if(root != NULL){
-                printInOrder(root->left, file, level+1);
-                fprintf(file,"Level: %d || %s\n", level, root->nodeName);
-                printInOrder(root->leftmiddle, file, level+1);
-                fprintf(file,"Level: %d || %s\n", level, root->nodeName);
-                printInOrder(root->rightmiddle, file, level+1);
-                printInOrder(root->right, file, level+1);
-        }
-}
-
-void printInOrderNow(struct Node* root, int level){
-        if(root != NULL){
-                printInOrderNow(root->left,level+1);
                 printf("Level: %d || %s ||", level, root->nodeName);
                 if(root->tk1 != NULL){
                         printf(" %s ||", root->tk1->tokenInstance);
@@ -68,20 +46,10 @@ void printInOrderNow(struct Node* root, int level){
                         printf(" %s ||", root->tk3->tokenInstance);
                 }
                 printf("\n");
-                printInOrderNow(root->leftmiddle, level+1);
-                // printf("Level: %d || %s ||", level, root->nodeName);
-                // if(root->tk1 != NULL){
-                //         printf(" %s ||", root->tk1->tokenInstance);
-                // }
-                // if(root->tk2 != NULL){
-                //         printf(" %s ||", root->tk2->tokenInstance);
-                // }
-                // if(root->tk3 != NULL){
-                //         printf(" %s ||", root->tk3->tokenInstance);
-                // }
-                // printf("\n");
-                printInOrderNow(root->rightmiddle, level+1);
-                printInOrderNow(root->right, level+1);
+                printPreOrderNow(root->left,level+1);
+                printPreOrderNow(root->leftmiddle, level+1);
+                printPreOrderNow(root->rightmiddle, level+1);
+                printPreOrderNow(root->right, level+1);
         }
 }
 
@@ -124,7 +92,7 @@ struct Token* currentToken(int x, struct Token* list){
 
 
 
-void parser(struct Token* list){
+struct Node* parser(struct Token* list){
         //printf("In parser Function...\n");
         struct Node* root;
         root = program(list);
@@ -134,13 +102,10 @@ void parser(struct Token* list){
                 printf("Error in parser function\n");
         }
 
-        printInOrderNow(root,0);
-        printf("Done with tree\n");
-        freeTree(root);
+        printPreOrderNow(root,0);
+        //freeTree(root);
 
-        printf("Done\n");
-
-        return;
+        return root;
 }
 
 struct Node* program(struct Token* list){
@@ -455,7 +420,7 @@ struct Node* stat(struct Token* list){
 
                 }
         }else if(strcmp(currentToken(tokenNum, list)->idTk,"KW_TK") == 0 && strcmp(currentToken(tokenNum, list)->tokenInstance,"set") == 0){
-                struct Node* temp = getNode("stat--assign");
+                struct Node* temp = getNode("stat--assignSet");
                 temp->tk1 = currentToken(tokenNum, list);
                 tokenNum++;
                 if(strcmp(currentToken(tokenNum, list)->idTk,"IDENT_TK") == 0){
