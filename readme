@@ -1,0 +1,11 @@
+This program is designed to take input as shown below
+./Project3 [file]
+The input file should contain code for the program to parse
+First, it will remove comments and tokenize the file
+Second, it will parse the grammar according to our languages grammar
+  and produce a parse tree
+Lastly, it will go through a staticSemantics function that will output
+  any error that has to do with scoping of variables
+
+Note: I fixed my Project2 for this if I can get points back
+This is a full credit attempt: local option
