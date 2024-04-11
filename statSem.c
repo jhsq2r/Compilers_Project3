@@ -59,11 +59,10 @@ void popAllAndFree(Stack* stack) {
         stack->top--; 
     }
 }
-
-void semantics(struct Node* root, int scope, int varcounter, Stack* stack){
+int varcounter = 0;
+void semantics(struct Node* root, Stack* stack){
         if(root != NULL){
                 if(strcmp(root->nodeName,"programExtended") == 0){
-                    scope = 1;
                     varcounter = 0;
                     //printf("In programExtended\n");
                 }else if(strcmp(root->nodeName, "vars") == 0 && strcmp(root->tk1->tokenInstance, "create") == 0){
@@ -72,12 +71,15 @@ void semantics(struct Node* root, int scope, int varcounter, Stack* stack){
                     //if not add it to stack
                     if(find(stack, root->tk2->tokenInstance) == 1){
                         push(stack,root->tk2->tokenInstance,0);//mark with no initial value
+                        //printf("adding %s to stack\n", root->tk2->tokenInstance);
+                        varcounter = varcounter + 1;
+                        //printf("varcounter: %d\n", varcounter);
                     }else{//if yes call error
-                        printf("Error: Already declared in scope\n");
+                        printf("Error: %s already declared in scope\n", root->tk2->tokenInstance);
                         return;
                     }
                     //increment block var counter
-                    varcounter++;
+                    
                 }else if(strcmp(root->nodeName, "varsExtended") == 0 && strcmp(root->tk1->tokenInstance, ":=")){
                     //printf("In varsExtended\n");
                     //edit top of stack to show that the variable was initialized with a value
@@ -85,6 +87,7 @@ void semantics(struct Node* root, int scope, int varcounter, Stack* stack){
                 }else if(strcmp(root->nodeName, "block") == 0){
                     //printf("In block\n");
                     //pop stack varcounter times to clean scope
+                    //printf("Popping %d times\n", varcounter);
                     popN(stack, varcounter);
                     //reset varcounter
                     varcounter = 0;
@@ -128,10 +131,10 @@ void semantics(struct Node* root, int scope, int varcounter, Stack* stack){
                     }
                 }
                 
-                semantics(root->left,scope, varcounter, stack);
-                semantics(root->leftmiddle,scope, varcounter, stack);
-                semantics(root->rightmiddle, scope, varcounter, stack);
-                semantics(root->right, scope, varcounter, stack);
+                semantics(root->left, stack);
+                semantics(root->leftmiddle, stack);
+                semantics(root->rightmiddle, stack);
+                semantics(root->right, stack);
         }
 }
 
@@ -140,7 +143,8 @@ void staticSemantics(struct Node* root){
     Stack stack;
     initializeStack(&stack);
 
-    semantics(root, 0, 0, &stack);
+    printf("STATIC SEMANTICS ERRORS:\n");
+    semantics(root, &stack);
 
     popAllAndFree(&stack);
 }
